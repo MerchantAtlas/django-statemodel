@@ -2,6 +2,7 @@ from datetime import datetime
 from copy import copy
 
 from django.db import models
+from django.db.models.query_utils import DeferredAttribute
 from djangotoolbox.fields import ListField, EmbeddedModelField
 
 from django_statemodel.signals import save_timestamp_cache, set_default_state
@@ -155,7 +156,8 @@ class StateModel(models.Model):
         # Check if we are setting the "state" field and that we are done
         # initializing. Done initializing means the __init__ is finished.
         if key == meta_options.state_field_name and \
-                getattr(self, DONE_INITIALIZING, False):
+                getattr(self, DONE_INITIALIZING, False) and \
+                not isinstance(value, DeferredAttribute):
             # Value can be a tuple of (<state>, <datetime object>)
             if isinstance(value, (tuple, list)):
                 if len(value) != 2 or not isinstance(value[1], datetime):

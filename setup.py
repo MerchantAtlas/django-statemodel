@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='django-statemodel',
-    version='1.0',
+    version='1.0.1',
     author='Michael Steffeck/Merchant Atlas Inc.',
     author_email="msteffeck@merchantatlas.com",
     url='https://github.com/MobileSpinach/django-statemodel',
