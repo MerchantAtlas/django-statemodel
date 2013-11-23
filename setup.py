@@ -5,7 +5,7 @@ setup(
     version='1.0.1',
     author='Michael Steffeck/Merchant Atlas Inc.',
     author_email="msteffeck@merchantatlas.com",
-    url='https://github.com/MobileSpinach/django-statemodel',
+    url='https://github.com/MerchantAtlas/django-statemodel',
     license='3-clause BSD',
     description="State management tool for Django models",
     packages=("django_statemodel",),
