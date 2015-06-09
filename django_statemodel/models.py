@@ -78,14 +78,28 @@ class StateModelBase(models.base.ModelBase):
                                  "'default_state' is set to None or 'state_map'"
                                  " is undefined.")
 
+            # Check the state field type according to the default state type
+            # now we can use integer states or string states,
+            # we should use string states, it's easy to debug and understand the states
+            # when we use mongo
+            field = models.IntegerField
+            transition = DefaultStateTransitionTimestamp
+            if isinstance(default_state, basestring):
+                field = models.CharField
+                transition = CharStateTransitionTimestamp
+
             # Add the state-model fields
-            attrs[state_field_name] = models.IntegerField(null=True,
-                                                          db_index=db_index,
-                                                          choices=state_map)
-            attrs[state_timestamps_field_name] = \
-                        ListField(EmbeddedModelField(StateTransitionTimestamp),
-                                  default=[],
-                                  blank=True)
+            attrs[state_field_name] = field(
+                max_length=12,
+                null=True,
+                db_index=db_index,
+                choices=state_map
+            )
+            attrs[state_timestamps_field_name] = ListField(
+                EmbeddedModelField(transition),
+                default=[],
+                blank=True
+            )
 
             # Save the options for this model in an object attached to the model
             options_cache = StateModelBase.StateModelOptions(
@@ -129,11 +143,10 @@ class StateModelBase(models.base.ModelBase):
                                     "_%s_cache" % state_timestamps_field_name
 
 
-class StateTransitionTimestamp(models.Model):
-    state = models.IntegerField(
-        blank=False,
-        null=False,
-        help_text="The state of this transition")
+class BaseStateTransitionTimestamp(models.Model):
+
+    class Meta:
+        abstract = True
 
     state_time = models.DateTimeField(
         blank=False,
@@ -143,6 +156,20 @@ class StateTransitionTimestamp(models.Model):
 
     def __unicode__(self):
         return "%s: %s" % (self.state, self.state_time)
+
+
+class DefaultStateTransitionTimestamp(BaseStateTransitionTimestamp):
+    state = models.IntegerField(
+        blank=False,
+        null=False,
+        help_text="The state of this transition")
+
+
+class CharStateTransitionTimestamp(models.Model):
+    state = models.CharField(
+        blank=False,
+        null=False,
+        help_text="The state of this transition")
 
 
 class StateModel(models.Model):
@@ -185,10 +212,13 @@ class StateModel(models.Model):
             if value != getattr(self, meta_options.state_field_name):
                 # We store the timestamp in a cache until the model is saved.
                 # This way, we only update the state_timestamps once per save.
-                state_transition = StateTransitionTimestamp(
-                                        state=value, state_time=timestamp)
-                setattr(self,
-                        meta_options.state_timestamps_cache_name,
-                        state_transition)
+
+                tr = (isinstance(value, basestring) and
+                      CharStateTransitionTimestamp or
+                      DefaultStateTransitionTimestamp)
+
+                name = meta_options.state_timestamps_cache_name
+
+                setattr(self, name, tr(state=value, state_time=timestamp))
 
         super(StateModel, self).__setattr__(key, value)
