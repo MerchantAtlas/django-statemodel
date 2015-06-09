@@ -165,8 +165,9 @@ class DefaultStateTransitionTimestamp(BaseStateTransitionTimestamp):
         help_text="The state of this transition")
 
 
-class CharStateTransitionTimestamp(models.Model):
+class CharStateTransitionTimestamp(BaseStateTransitionTimestamp):
     state = models.CharField(
+        max_length=12,
         blank=False,
         null=False,
         help_text="The state of this transition")
