@@ -200,6 +200,11 @@ class StateModel(models.Model):
                 timestamp = datetime.utcnow() if meta_options.use_utc else \
                             datetime.now()
 
+            try:
+                value = int(value)
+            except:
+                pass
+
             if not meta_options.allow_none_state and value is None:
                 raise ValueError("The given state value is None, and None "
                                  "states are not allowed.")
